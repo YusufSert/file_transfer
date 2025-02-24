@@ -1,0 +1,3 @@
+{"time":"2025-01-29T10:10:08.434017984+02:00","level":"INFO","msg":"start syncing local files","worker":"sync_local","src":"/home/yusufcan/Desktop/ftp_read","dst":"/home/yusufcan/Desktop/network_incoming"}
+{"time":"2025-01-29T10:10:13.434311224+02:00","level":"DEBUG","msg":"fetching server files","worker":"sync_local","from":"localhost:21"}
+{"time":"2025-01-29T10:10:13.435094822+02:00","level":"DEBUG","msg":"sync end","worker":"sync_local","total_file_sync":0}
