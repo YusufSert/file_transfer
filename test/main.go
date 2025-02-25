@@ -166,3 +166,81 @@ func conn() (string, error) {
 }
 
 var errString error = errors.New("string error")
+
+func doWorkj(
+	done <-chan interface{},
+	intList ...int,
+) (startGoroutineFn, <-chan interface{}) {
+	intChanStream := make(chan (<-chan interface{}))
+	intStream := bridge(done, intChanStream)
+	doWork := func(
+		done <-chan interface{},
+		pulseInterval time.Duration,
+	) <-chan interface{} {
+		intStream := make(chan interface{})
+		heartbeat := make(chan interface{})
+		go func() {
+			defer close(intStream)
+			select {
+			case intChanStream <- intStream:
+			case <-done:
+				return
+			}
+			pulse := time.Tick(pulseInterval)
+			for {
+			valueLoop:
+				for _, intVal := range intList {
+					if intVal < 0 {
+						log.Printf("negative value: %v\n", intVal)
+						return
+					}
+					for {
+						select {
+						case <-pulse:
+							select {
+							case heartbeat <- struct{}{}:
+							default:
+							}
+						case intStream <- intVal:
+							continue valueLoop
+						case <-done:
+							return
+						}
+					}
+				}
+			}
+		}()
+		return heartbeat
+	}
+	return doWork, intStream
+}
+bridge := func(
+done <-chan interface{},
+chanStream <-chan <-chan interface{},
+) <-chan interface{} {
+valStream := make(chan interface{})
+go func() {
+defer close(valStream)
+for {
+var stream <-chan interface{}
+select {
+case maybeStream, ok := <-chanStream:
+if ok == false {
+return
+}
+stream = maybeStream
+case <-done:
+return
+}
+for val := range orDone(done, stream) {
+select {
+case valStream <- val:
+case <-done:
+}
+}
+}
+122
+|
+Chapter 4: Concurrency Patterns in Go}()
+return valStream
+}
