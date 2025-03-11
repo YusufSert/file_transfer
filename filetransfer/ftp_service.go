@@ -26,7 +26,7 @@ type FTP struct {
 
 	connectServer connectorFunc
 
-	mu           sync.Mutex // protects following fields
+	mu           sync.Mutex // protects the following fields
 	freeConn     []*ftpConn // free connections ordered by returnedAt oldest to newest
 	connRequests map[uint64]chan connRequest
 	nextRequest  uint64 // Next key to use in connRequests.
@@ -755,8 +755,8 @@ func (s *FTP) ListFilesContext(ctx context.Context, rootPath string) ([]os.FileI
 		// skip dir
 		stat := walker.Stat()
 
-		fmt.Printf("%+v\n", stat)
 		if stat.Type == ftp.EntryTypeFolder {
+			walker.SkipDir()
 			continue
 		}
 
@@ -772,6 +772,9 @@ func (s *FTP) ListFilesContext(ctx context.Context, rootPath string) ([]os.FileI
 	return files, nil
 }
 
+// FTP 550 no such file or directory”
+//todo: return errNotFound if ftp returns 550 code.
+
 // Copy copies the file to given io.writer
 func (s *FTP) Copy(dst io.Writer, path string) (int64, error) {
 	var fc *ftpConn
@@ -782,18 +785,22 @@ func (s *FTP) Copy(dst io.Writer, path string) (int64, error) {
 		return err
 	})
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("ftp: error getting conn from the pool %w", err)
 	}
 
-	var res *ftp.Response
+	var src *ftp.Response
 	withLock(fc, func() {
-		res, err = fc.ci.Retr(path)
+		src, err = fc.ci.Retr(path)
 	})
 	if err != nil {
-		return 0, fmt.Errorf("ftp: error copying file from %s %w", path, err)
+		return 0, fmt.Errorf("ftp: error retriving file: %s %w", path, err)
 	}
-
-	return io.Copy(dst, res)
+	n, err := io.Copy(dst, src)
+	if err != nil {
+		return 0, fmt.Errorf("ftp: error copying file: %s %w", path, err)
+	}
+	fc.releaseConn(err)
+	return n, err
 }
 
 // Delete deletes the file from the ftp server
@@ -815,7 +822,7 @@ func (s *FTP) Delete(p string) error {
 	if err != nil {
 		return fmt.Errorf("ftp: error deleting file from %s %w", p, err)
 	}
-
+	fc.releaseConn(err)
 	return nil
 }
 

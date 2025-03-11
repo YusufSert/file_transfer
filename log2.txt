@@ -1,0 +1,97 @@
+{"time":"2025-03-10T10:47:14.228047819+02:00","level":"DEBUG","msg":"pgm: staring worker: syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:47:14.228101961+02:00","level":"INFO","msg":"pgm: syncing server files","data":{"worker":"syncServer","src":"/home/yusufcan/Desktop/network_toupload","dst":"localhost:21/home/yusufcan/Desktop/ftp_write"}}
+{"time":"2025-03-10T10:47:14.228117611+02:00","level":"INFO","msg":"log-agent: agent starting to read log file","data":{"file_path":"./log2.txt"}}
+{"time":"2025-03-10T10:47:14.228129662+02:00","level":"DEBUG","msg":"pgm: staring worker: syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:47:14.228178303+02:00","level":"INFO","msg":"pgm: syncing local files","data":{"worker":"syncLocal","src":"localhost:21/home/yusufcan/Desktop/ftp_read","dst":"/home/yusufcan/Desktop/network_incoming"}}
+{"time":"2025-03-10T10:47:15.228265409+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:47:15.22828258+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:47:16.228566507+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:47:16.228599788+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:32.210312845+02:00","level":"DEBUG","msg":"pgm: staring worker: syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:32.21047408+02:00","level":"INFO","msg":"pgm: syncing server files","data":{"worker":"syncServer","src":"/home/yusufcan/Desktop/network_toupload","dst":"localhost:21/home/yusufcan/Desktop/ftp_write"}}
+{"time":"2025-03-10T10:50:32.210365347+02:00","level":"INFO","msg":"log-agent: agent starting to read log file","data":{"file_path":"./log2.txt"}}
+{"time":"2025-03-10T10:50:32.210394548+02:00","level":"DEBUG","msg":"pgm: staring worker: syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:32.21049458+02:00","level":"INFO","msg":"pgm: syncing local files","data":{"worker":"syncLocal","src":"localhost:21/home/yusufcan/Desktop/ftp_read","dst":"/home/yusufcan/Desktop/network_incoming"}}
+{"time":"2025-03-10T10:50:33.210512949+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:33.210566471+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:34.211105933+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:34.211128514+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:35.210617347+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:35.210628318+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:36.211151187+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:36.211172708+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:37.210649912+02:00","level":"DEBUG","msg":"pgm: pooling","data":{"worker":"syncLocal","src":"localhost:21/home/yusufcan/Desktop/ftp_read","dst":"/home/yusufcan/Desktop/network_incoming"}}
+{"time":"2025-03-10T10:50:37.210681962+02:00","level":"DEBUG","msg":"pgm: pooling","data":{"worker":"syncServer","src":"/home/yusufcan/Desktop/network_toupload","dst":"localhost:21/home/yusufcan/Desktop/ftp_write"}}
+{"time":"2025-03-10T10:50:37.210786055+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:37.217231896+02:00","level":"DEBUG","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"t2.txt"}}
+{"time":"2025-03-10T10:50:37.217277978+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:37.261711403+02:00","level":"DEBUG","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"t2.txt","local_file_name":"/home/yusufcan/Desktop/network_incoming/t2.txt"}}
+{"time":"2025-03-10T10:50:37.261721813+02:00","level":"DEBUG","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:50:37.316254951+02:00","level":"DEBUG","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf","local_file_name":"/home/yusufcan/Desktop/network_incoming/The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:50:38.210846164+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:38.210861505+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:39.210572937+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:39.210612518+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:40.211234192+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:40.211269233+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:41.210879758+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:41.210890748+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:42.21148721+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:42.21151256+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:42.2115017+02:00","level":"DEBUG","msg":"pgm: pooling","data":{"worker":"syncServer","src":"/home/yusufcan/Desktop/network_toupload","dst":"localhost:21/home/yusufcan/Desktop/ftp_write"}}
+{"time":"2025-03-10T10:50:42.316860304+02:00","level":"DEBUG","msg":"pgm: pooling","data":{"worker":"syncLocal","src":"localhost:21/home/yusufcan/Desktop/ftp_read","dst":"/home/yusufcan/Desktop/network_incoming"}}
+{"time":"2025-03-10T10:50:42.323580503+02:00","level":"DEBUG","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"t2.txt"}}
+{"time":"2025-03-10T10:50:42.365663101+02:00","level":"DEBUG","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"t2.txt","local_file_name":"/home/yusufcan/Desktop/network_incoming/t2.txt"}}
+{"time":"2025-03-10T10:50:42.365673181+02:00","level":"DEBUG","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:50:42.37633718+02:00","level":"DEBUG","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf","local_file_name":"/home/yusufcan/Desktop/network_incoming/The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:50:43.210967298+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:43.210979418+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:50:44.211069355+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:50:44.211080746+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:53:40.447037176+02:00","level":"DEBUG","msg":"pgm: staring worker: syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:53:40.44717989+02:00","level":"INFO","msg":"pgm: syncing server files","data":{"worker":"syncServer","src":"/home/yusufcan/Desktop/network_toupload","dst":"localhost:21/home/yusufcan/Desktop/ftp_write"}}
+{"time":"2025-03-10T10:53:40.447084478+02:00","level":"INFO","msg":"log-agent: agent starting to read log file","data":{"file_path":"./log2.txt"}}
+{"time":"2025-03-10T10:53:40.447221961+02:00","level":"DEBUG","msg":"pgm: staring worker: syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:53:40.447253312+02:00","level":"INFO","msg":"pgm: syncing local files","data":{"worker":"syncLocal","src":"localhost:21/home/yusufcan/Desktop/ftp_read","dst":"/home/yusufcan/Desktop/network_incoming"}}
+{"time":"2025-03-10T10:53:41.447877718+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:53:41.447896258+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:53:42.447546507+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:53:42.447569697+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:53:43.447240128+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncServer","data":{"monitor":"syncServer"}}
+{"time":"2025-03-10T10:53:43.448299448+02:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker:syncLocal","data":{"monitor":"syncLocal"}}
+{"time":"2025-03-10T10:53:45.454526493+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"t2.txt"}}
+{"time":"2025-03-10T10:53:45.501680775+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"t2.txt","local_file_name":"/home/yusufcan/Desktop/network_incoming/t2.txt"}}
+{"time":"2025-03-10T10:53:45.501692325+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:53:45.552460058+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf","local_file_name":"/home/yusufcan/Desktop/network_incoming/The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:53:50.559062447+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"t2.txt"}}
+{"time":"2025-03-10T10:53:50.605753777+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"t2.txt","local_file_name":"/home/yusufcan/Desktop/network_incoming/t2.txt"}}
+{"time":"2025-03-10T10:53:50.605771348+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:53:50.615724076+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf","local_file_name":"/home/yusufcan/Desktop/network_incoming/The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:53:55.623075571+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"t2.txt"}}
+{"time":"2025-03-10T10:53:55.666237332+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"t2.txt","local_file_name":"/home/yusufcan/Desktop/network_incoming/t2.txt"}}
+{"time":"2025-03-10T10:53:55.666258943+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:53:55.72036376+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf","local_file_name":"/home/yusufcan/Desktop/network_incoming/The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:00.727199412+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"t2.txt"}}
+{"time":"2025-03-10T10:54:00.769679923+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"t2.txt","local_file_name":"/home/yusufcan/Desktop/network_incoming/t2.txt"}}
+{"time":"2025-03-10T10:54:00.769692554+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:00.780364543+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf","local_file_name":"/home/yusufcan/Desktop/network_incoming/The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:05.787453405+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"t2.txt"}}
+{"time":"2025-03-10T10:54:05.833939528+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"t2.txt","local_file_name":"/home/yusufcan/Desktop/network_incoming/t2.txt"}}
+{"time":"2025-03-10T10:54:05.833957559+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:05.884151898+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf","local_file_name":"/home/yusufcan/Desktop/network_incoming/The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:10.892697793+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"t2.txt"}}
+{"time":"2025-03-10T10:54:10.933825527+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"t2.txt","local_file_name":"/home/yusufcan/Desktop/network_incoming/t2.txt"}}
+{"time":"2025-03-10T10:54:10.933839498+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:10.944188198+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf","local_file_name":"/home/yusufcan/Desktop/network_incoming/The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:15.95295803+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"t2.txt"}}
+{"time":"2025-03-10T10:54:15.993759255+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"t2.txt","local_file_name":"/home/yusufcan/Desktop/network_incoming/t2.txt"}}
+{"time":"2025-03-10T10:54:15.993770786+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:16.003940501+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf","local_file_name":"/home/yusufcan/Desktop/network_incoming/The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:21.012208233+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"t2.txt"}}
+{"time":"2025-03-10T10:54:21.05770789+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"t2.txt","local_file_name":"/home/yusufcan/Desktop/network_incoming/t2.txt"}}
+{"time":"2025-03-10T10:54:21.0577206+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:21.067726561+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf","local_file_name":"/home/yusufcan/Desktop/network_incoming/The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:26.074991858+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"t2.txt"}}
+{"time":"2025-03-10T10:54:26.11787098+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"t2.txt","local_file_name":"/home/yusufcan/Desktop/network_incoming/t2.txt"}}
+{"time":"2025-03-10T10:54:26.117887211+02:00","level":"INFO","msg":"pgm: trying to sync file","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}
+{"time":"2025-03-10T10:54:26.16844483+02:00","level":"INFO","msg":"pgm: file synced","data":{"worker":"syncLocal","ftp_file_name":"The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf","local_file_name":"/home/yusufcan/Desktop/network_incoming/The.C.Programming.Language.2Nd.Ed Prentice.Hall.Brian.W.Kernighan.and.Dennis.M.Ritchie.-1.pdf"}}

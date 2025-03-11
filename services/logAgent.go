@@ -1,4 +1,4 @@
-package main
+package services
 
 import (
 	"bufio"
@@ -8,86 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
-	"runtime"
 	"time"
 )
-
-func main() {
-	// Fast version (changes order)
-	a := []string{"A", "B", "C", "D", "E"}
-	i := 2
-	noew := time.Now()
-	// Remove the element at index i from a.
-	a[i] = a[len(a)-1] // Copy last element to index i
-	a[len(a)-1] = ""   // Erase last element (write zero value)
-	a = a[:len(a)-1]   // Truncate slice.
-	fmt.Println(time.Since(noew))
-	fmt.Println(a)
-
-	// Slow version
-	b := []string{"A", "B", "C", "D", "E"}
-
-	noew = time.Now()
-	// Remove the element at index i from b
-	copy(b[i:], b[i+1:]) // Shift b[i+1:] left one index.
-	b[len(b)-1] = ""     // Erase last element (write zero value).
-	b = b[:len(b)-1]     // Truncate slice
-
-	/*
-		err := os.Rename("./log3.txt", "./test/log2.txt")
-
-		if err != nil {
-			var eN syscall.Errno
-			if errors.As(err, &eN) {
-				fmt.Println(uint(eN))
-			}
-			fmt.Println(eN)
-		}
-	*/
-	/*
-	   fileW, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND, 0644)
-	   if err != nil {
-	       log.Fatal(err.Error())
-	   }
-	   defer fileW.Close()
-	   l := slog.New(slog.NewJSONHandler(fileW, nil)).WithGroup("data")
-	   for i := 0; i < 10; i++ {
-	       l.Error("error log", "err", errors.New("test-error"))
-	       l.Info("info log", "id", 1000+i)
-	   }
-	*/
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	reader := bufio.NewReader(file)
-	var pos uint64
-	for {
-		record, err := reader.ReadBytes('\n')
-		if err != nil {
-			if err == io.EOF {
-				time.Sleep(1 * time.Second)
-				fmt.Println(err)
-			}
-		}
-		pos += uint64(len(record))
-		fmt.Println(pos)
-
-		if err == nil {
-			var r Record
-			err = json.Unmarshal(record, &r)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("%+v\n", r)
-		}
-	}
-}
 
 type LogAgent struct {
 	db     *sql.DB
@@ -96,7 +21,7 @@ type LogAgent struct {
 	r      *bufio.Reader
 
 	position uint64
-	fileStat os.FileInfo
+	filePath string
 	closed   bool
 	err      error
 }
@@ -128,9 +53,10 @@ func NewLogAgent() (*LogAgent, error) {
 	reader := bufio.NewReader(fileR)
 
 	a := &LogAgent{
-		Logger: logger,
-		Level:  level,
-		r:      reader,
+		Logger:   logger,
+		Level:    level,
+		r:        reader,
+		filePath: filePath,
 	}
 
 	return a, nil
@@ -145,8 +71,8 @@ func (a *LogAgent) Run(ctx context.Context) error {
 }
 
 func (a *LogAgent) pool(ctx context.Context) <-chan struct{} {
-	a.Logger.Info("log-agent: agent starting to read log file", "file_stat", a.fileStat)
-	backoff, backOffMax := time.Second*3, time.Second*60
+	a.Logger.Info("log-agent: agent starting to read log file", "file_path", a.filePath)
+	backoff, backOffMax := time.Millisecond*300, time.Second*60
 	d := backoff
 
 	heartbeat := make(chan struct{}, 1)
@@ -190,13 +116,13 @@ func (a *LogAgent) pool(ctx context.Context) <-chan struct{} {
 					a.err = err
 					break
 				}
-			}
 
-			err = a.writeToDB(r) // if it fails forget it not that big deal
-			if err != nil {
-				a.Logger.Error("log-agent: error writing record to db", "error", err)
-			} else {
-				d = backoff
+				err = a.writeToDB(r) // if it fails forget it not that big deal
+				if err != nil {
+					a.Logger.Error("log-agent: error writing record to db", "error", err)
+				} else {
+					d = backoff
+				}
 			}
 
 			if !t.Stop() {
@@ -230,7 +156,23 @@ func (a *LogAgent) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		lvl = slog.LevelDebug
 	}
 	a.Level.Set(lvl)
-	w.Write([]byte("new log level" + a.Level.String()))
+	stat, _ := os.Stat(a.filePath)
+
+	info := struct {
+		Level           string    `json:"log_level"`
+		CurReadPosition uint64    `json:"cur_read_position"`
+		FileName        string    `json:"file_name"`
+		FileSize        int64     `json:"file_size"`
+		FileModTime     time.Time `json:"file_mod_time"`
+	}{
+		Level:           a.Level.String(),
+		FileName:        stat.Name(),
+		FileSize:        stat.Size(),
+		FileModTime:     stat.ModTime(),
+		CurReadPosition: a.position,
+	}
+
+	json.NewEncoder(w).Encode(&info)
 }
 
 func (a *LogAgent) runServer() {
@@ -247,9 +189,4 @@ type Record struct {
 	Level string
 	Msg   string
 	Data  map[string]any
-}
-
-func stack() string {
-	var buf [2 << 10]byte
-	return string(buf[:runtime.Stack(buf[:], false)])
 }

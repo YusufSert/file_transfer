@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"crypto/sha1"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -11,20 +12,26 @@ import (
 	"os"
 	"path"
 	"pgm/filetransfer"
+
+	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
-// todo check osPipe, ioTeeReader
+// todo: check osPipe, ioTeeReader
 
 type PGMService struct {
-	ftp    *filetransfer.FTP
-	r      *sql.DB
-	l      *slog.Logger
-	rename func(name string) string
-	cfg    PGMConfig
-}
+	ftp      *filetransfer.FTP
+	r        *sql.DB
+	l        *slog.Logger
+	renameFn func(name string) string
+	cfg      PGMConfig
 
+	mu                sync.Mutex //protects the following fields
+	maxTimeoutStopped int64      // Total number of workers stopped due to timout.
+	ErrStopped        int64      // Total number of workers stopped due to err.
+}
 type PGMConfig struct {
 	User, Password       string
 	Addr                 string
@@ -38,85 +45,93 @@ type PGMConfig struct {
 	HeartBeatInterval    time.Duration
 }
 
-func NewPGMService(cfg PGMConfig) (*PGMService, error) {
+func NewPGMService(cfg PGMConfig, agent *LogAgent) (*PGMService, error) {
 	f, err := filetransfer.Open(cfg.Addr, cfg.User, cfg.Password)
 	if err != nil {
 		return nil, err
 	}
-	// todo fake logger lib deki default config func burda kullan
+
 	return &PGMService{
 		ftp: f,
 		cfg: cfg,
-		l:   slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+		l:   agent.Logger,
 	}, nil
 }
 
 func (s *PGMService) Run(ctx context.Context) error {
-	errLocal, pulseLocal := s.syncLocal(ctx, time.Second*3)
-	errServer, pulseServer := s.syncServer(ctx, time.Second*3)
+	errLocal := s.monitor(ctx, s.syncLocal, "syncLocal")
+	errServer := s.monitor(ctx, s.syncServer, "syncServer")
 
+	// use monitor for restarting, alerting the user and send the error to Run() if error not retryable.
 	var err error
-	for err == nil {
+	for {
 		select {
 		case err = <-errLocal:
-			// restart localSync
+			return err
 		case err = <-errServer:
-			// restart serverSync
-		default:
-			select {
-			case <-pulseLocal:
-				fmt.Println("local sync alive")
-			case <-time.After(time.Second * 5):
-				// todo: restart both sync
-			}
-			select {
-			case <-pulseServer:
-				fmt.Println("server sync alive")
-			case <-time.After(time.Second * 5):
-				// todo: restart sync
-			}
+			return err
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	}
-	return err
 }
 
+var debugSync bool = true
+
+// todo: alert user that new file syncing
+// syncLocal syncs local files by pooling the ftp-server with s.cfg.PoolInterval
 func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan struct{}, <-chan error) {
-	s.l.Debug("pgm: syncing local files", "src", path.Join(s.cfg.Addr, s.cfg.FTPReadPath), "dst", s.cfg.NetworkIncomingPath)
+	logger := s.l.With("worker", "syncLocal")
+	logger.Info("pgm: syncing local files", "src", path.Join(s.cfg.Addr, s.cfg.FTPReadPath), "dst", s.cfg.NetworkIncomingPath)
 
 	heartbeatCh := make(chan struct{}, 1)
 	errCh := make(chan error)
+
 	go func() {
 		defer close(errCh)
 		defer close(heartbeatCh)
-
-		t := time.NewTimer(d)
 		localP := s.cfg.NetworkIncomingPath
+
+		poolTimer := time.NewTimer(s.cfg.PoolInterval)
+		pulse := time.NewTicker(d)
+		defer poolTimer.Stop()
+		defer pulse.Stop()
+
 		for {
 			select {
-			case <-t.C:
-			case <-time.After(time.Second * 1):
+			case <-pulse.C:
 				select {
 				default:
 				case heartbeatCh <- struct{}{}:
 				}
 				continue
+			case <-poolTimer.C:
+				logger.Debug("pgm: pooling", "src", path.Join(s.cfg.Addr, s.cfg.FTPReadPath), "dst", s.cfg.NetworkIncomingPath)
+			case <-ctx.Done():
+				errCh <- ctx.Err()
+				return
 			}
 
 			// sync-list
 			infos, err := s.ftp.ListFilesContext(ctx, s.cfg.FTPReadPath)
 			if err != nil {
-				errCh <- fmt.Errorf("pgm: couldn't fetch file infos from server %w", err)
+				errCh <- &ServiceError{Msg: "pgm: couldn't fetch file infos from server", Op: "s.ftp.ListFilesContext", Trace: stack(), Retry: true, Err: err}
 				return
 			}
 
 			for _, i := range infos {
 				select {
-				default:
+				case <-pulse.C:
+					select {
+					case heartbeatCh <- struct{}{}:
+					default:
+					}
 				case <-ctx.Done():
 					errCh <- ctx.Err()
 					return
+				default:
 				}
-				// send pulse to say I am alive.
+				logger.Info("pgm: trying to sync file", "ftp_file_name", i.Name())
 
 				name := path.Join(localP, i.Name())
 				// Don't check if file exists on local, server file will be deleted and of this process.
@@ -129,26 +144,50 @@ func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan str
 						continue
 					}
 				*/
-				f, err := os.Create(s.rename(name))
+				f, err := createFile(name) // if windows err-code 53 then we should rtry
 				if err != nil {
-					errCh <- fmt.Errorf("pgm: couldn't create %s on local machine %w", name, err)
+					errCh <- err
 					return
 				}
 
-				_, err = s.ftp.Copy(f, i.Name())
+				_, err = s.ftp.Copy(f, path.Join(s.cfg.FTPReadPath, i.Name()))
 				if err != nil {
-					errCh <- fmt.Errorf("pgm: couldn't copy %s from ftp server %w", i.Name(), err)
+					errCh <- &ServiceError{Msg: "pgm: couldn't copy " + i.Name() + " from ftp server", Op: "s.ftp.Copy", Trace: stack(), Retry: true, Err: err}
+					return
+				}
+
+				nN, err := newName(f)
+				if err != nil {
+					errCh <- &ServiceError{Msg: "pgm: couldn't create newName for file: " + path.Base(f.Name()), Op: "newName", Trace: stack(), Retry: false, Err: err}
+					return
+				}
+
+				nP := path.Join(localP, nN)
+				err = os.Rename(f.Name(), nP)
+				if err != nil {
+					errCh <- &ServiceError{Msg: fmt.Sprintf("pgm: couldn't rename oldpath: %s, newPath: %s", f.Name(), nP), Op: "os.Rename", Trace: stack(), Retry: false, Err: err} // not retryable error
 					return
 				}
 				f.Close()
 
-				err = s.ftp.Delete(i.Name())
-				if err != nil {
-					errCh <- fmt.Errorf("pgm: couldn't delete %s from the server %w", i.Name(), err)
-					return
+				if !debugSync {
+					//todo: ftp.Delete can return not found error 550 code
+					err = s.ftp.Delete(path.Join(s.cfg.FTPReadPath, i.Name()))
+					if err != nil {
+						errCh <- &ServiceError{Msg: "pgm: couldn't delete " + i.Name() + " from the server", Op: "s.ftp.Delete", Trace: stack(), Retry: true, Err: err}
+						return
+					}
+				}
+
+				logger.Info("pgm: file synced", "ftp_file_name", i.Name(), "local_file_name", f.Name())
+			}
+			if !poolTimer.Stop() {
+				select {
+				case <-poolTimer.C:
+				default:
 				}
 			}
-			t.Reset(d)
+			poolTimer.Reset(s.cfg.PoolInterval)
 		}
 	}()
 
@@ -157,73 +196,166 @@ func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan str
 
 // syncServer reads NetworkToUploadPath and writes files to FTPWritePath and moves them to NetworkOutgoingPath
 func (s *PGMService) syncServer(ctx context.Context, d time.Duration) (<-chan struct{}, <-chan error) {
-	s.l.Debug("pgm: syncing server files", "src", s.cfg.NetworkToUploadPath, "dst", path.Join(s.cfg.Addr, s.cfg.FTPWritePath))
+	logger := s.l.With("worker", "syncServer")
+	logger.Info("pgm: syncing server files", "src", s.cfg.NetworkToUploadPath, "dst", path.Join(s.cfg.Addr, s.cfg.FTPWritePath))
 
 	heartbeatCh := make(chan struct{}, 1)
 	errCh := make(chan error)
+
 	go func() {
 		defer close(errCh)
 		defer close(heartbeatCh)
 
-		t := time.NewTimer(d)
 		localP := s.cfg.NetworkToUploadPath
+
+		poolTimer := time.NewTimer(s.cfg.PoolInterval)
+		pulse := time.NewTicker(d)
+		defer poolTimer.Stop()
+		defer pulse.Stop()
+
 		for {
 			select {
-			case <-t.C:
+			case <-pulse.C:
+				select {
+				case heartbeatCh <- struct{}{}:
+				default:
+				}
+				continue
+			case <-poolTimer.C:
+				logger.Debug("pgm: pooling", "src", s.cfg.NetworkToUploadPath, "dst", path.Join(s.cfg.Addr, s.cfg.FTPWritePath))
+			case <-ctx.Done():
+				errCh <- ctx.Err()
+				return
 			}
 
 			// sync-list
 			infos, err := s.listFiles(localP)
 			if err != nil {
-				errCh <- fmt.Errorf("pgm: couldn't list file infos from local machine %w", err)
+				errCh <- err
 				return
 			}
 
 			for _, i := range infos {
 				select {
-				default:
+				case <-pulse.C:
+					select {
+					case heartbeatCh <- struct{}{}:
+					default:
+					}
 				case <-ctx.Done():
 					errCh <- ctx.Err()
 					return
-				}
-				// send pulse to say I am alive.
-				select {
-				case heartbeatCh <- struct{}{}:
 				default:
 				}
+				logger.Info("pgm: trying to sync file", "local_file_name", i.Name())
 
-				f, err := os.Open(path.Join(localP, i.Name()))
+				//todo: try all io operations with vpn open and close and see the erros, bc windows uses networkDirs
+				f, err := openFile(path.Join(localP, i.Name()))
 				if err != nil {
-					errCh <- fmt.Errorf("pgm: couldn't open %s on local machine %w", i.Name(), err)
+					errCh <- err
 					return
 				}
 
 				name := path.Join(s.cfg.FTPWritePath, i.Name())
 				err = s.ftp.Store(name, f)
 				if err != nil {
-					errCh <- fmt.Errorf("pgm: couldn't store %s to server %w", i.Name(), err)
+					errCh <- fmt.Errorf("pgm: couldn't store %s to server %w", i.Name(), err) // todo: change this to ServiceError{}
 					return
 				}
 
-				err = s.moveTo(f, path.Join(s.cfg.NetworkOutgoingPath, i.Name()))
+				err = move(f.Name(), path.Join(s.cfg.NetworkOutgoingPath, i.Name()))
 				if err != nil {
-					errCh <- fmt.Errorf("pgm: couldn't move %s to %s %w", i.Name(), s.cfg.NetworkOutgoingPath, err)
+					errCh <- err
 					f.Close()
 					return
 				}
 				f.Close()
 
-				err = os.Remove(path.Join(localP, i.Name()))
-				if err != nil {
-					errCh <- fmt.Errorf("pgm: couldn't remove %s from %s %w", i.Name(), s.cfg.NetworkToUploadPath, err)
-					return
+				//remove yapamıyor cunku move() zaten file ı kaldırdı bunu test error ları için bırak kalsın burda error istediğinde bunu uncommnet yap
+				/*
+					err = remove(path.Join(localP, i.Name()))
+					if err != nil {
+						errCh <- err
+						return
+					}
+				*/
+				logger.Info("pgm: file synced", "local_file_name", f.Name(), "ftp_file_name", i.Name())
+			}
+			if !poolTimer.Stop() {
+				select {
+				case <-poolTimer.C:
+				default:
 				}
 			}
-			t.Reset(d)
+			poolTimer.Reset(s.cfg.PoolInterval)
 		}
 	}()
 
 	return heartbeatCh, errCh
+}
+
+type worker func(context.Context, time.Duration) (<-chan struct{}, <-chan error)
+
+// monitor, monitors the worker and restart the worker if need it
+func (s *PGMService) monitor(ctx context.Context, fn worker, wName string) <-chan error {
+	logger := s.l.With("monitor", wName)
+	errCh := make(chan error)
+
+	go func() {
+		defer close(errCh)
+
+		var workerHeartbeat <-chan struct{}
+		var workerErrCh <-chan error
+		var cancel context.CancelFunc
+		var dctx context.Context // derived context
+
+		startWorker := func() {
+			dctx, cancel = context.WithCancel(ctx)
+			logger.Debug("pgm: staring worker: " + wName)
+			workerHeartbeat, workerErrCh = fn(dctx, s.cfg.HeartBeatInterval)
+		}
+		startWorker()
+
+		timeout := time.NewTimer(5 * time.Second)
+		for {
+			select {
+			case <-workerHeartbeat:
+				logger.Debug("pgm: receiving heartbeat from worker:" + wName)
+			case <-timeout.C:
+				logger.Warn("pgm: heartbeat timeout, unhealthy goroutine; restarting: " + wName)
+
+				s.mu.Lock()
+				s.maxTimeoutStopped++
+				s.mu.Unlock()
+				// todo: alert user
+				cancel()
+				startWorker()
+			case err := <-workerErrCh: // if not retryable error stop monitoring.
+				// todo: alert user
+				// dont send the error directly check if retryable error.
+				//errCh <- err
+				logger.Error("pgm: "+wName+" worker failure, cancelling the worker", "err", err)
+				s.mu.Lock()
+				s.ErrStopped++
+				s.mu.Unlock()
+
+				cancel()
+				startWorker()
+				logger.Info("pgm: worker restarted")
+			case <-ctx.Done(): // parent context will cancel the child ctx, no deed to explicitly call cancel() on the child ctx
+				errCh <- ctx.Err()
+				return
+			}
+			if !timeout.Stop() {
+				select {
+				case <-timeout.C:
+				default:
+				}
+			}
+			timeout.Reset(time.Second * 5)
+		}
+	}()
+	return errCh
 }
 
 func (s *PGMService) moveTo(r io.Reader, name string) error {
@@ -243,9 +375,13 @@ func (s *PGMService) moveTo(r io.Reader, name string) error {
 func (s *PGMService) listFiles(root string) ([]os.FileInfo, error) {
 	var fileInfos []os.FileInfo
 	w := fs.Walk(root)
+	r := false
 	for w.Step() {
 		if err := w.Err(); err != nil {
-			return nil, err
+			if isBadNetPath(err) {
+				r = true
+			}
+			return nil, &ServiceError{Msg: "pgm: couldn't list file infos from local machine", Op: "listFiles", Trace: stack(), Retry: r, Err: err}
 		}
 
 		info := w.Stat()
@@ -254,51 +390,112 @@ func (s *PGMService) listFiles(root string) ([]os.FileInfo, error) {
 		}
 		fileInfos = append(fileInfos, info)
 	}
-
 	return fileInfos, nil
 }
 
-type PGMError struct {
-	Op  string
-	err error
+//
+//All I/O operations bad network failure error detail abstracted away from caller by wrapping them by another function
+//
+
+// remove removes file from a given path.
+func remove(name string) error {
+	r := false
+	err := os.Remove(name)
+	if err != nil {
+		if isBadNetPath(err) {
+			r = true
+		}
+		return &ServiceError{Msg: fmt.Sprintf("pgm: couldn't remove %s", name), Op: "remove", Trace: stack(), Retry: r, Err: err}
+	}
+	return nil
 }
 
-type Circuit func(ctx context.Context) error
-
-func Breaker(circuit Circuit, failureThreshold uint) Circuit {
-	consecutiveFailures := 0
-	lastAttempt := time.Now()
-	var m sync.RWMutex
-
-	return func(ctx context.Context) error {
-		m.RLock()
-
-		d := consecutiveFailures - int(failureThreshold)
-
-		if d >= 0 {
-			shouldRetryAt := lastAttempt.Add(time.Second * 2 << d)
-			if !time.Now().After(shouldRetryAt) {
-				m.RUnlock()
-				return errors.New("service unreachable")
-			}
+func move(oldPath, newPath string) error {
+	r := false
+	err := os.Rename(oldPath, newPath)
+	if err != nil {
+		if isBadNetPath(err) {
+			r = true
 		}
-
-		m.RUnlock() // Release read lock
-
-		err := circuit(ctx)
-
-		m.Lock() // Lock around shared resources
-		defer m.Unlock()
-
-		lastAttempt = time.Now() // Record tme of attempt
-
-		if err != nil { // Circuit returned an error, so we count the failure and return
-			consecutiveFailures++
-			return err
-		}
-
-		consecutiveFailures = 0 // Reset failures counter
-
-		return nil
+		return &ServiceError{Msg: fmt.Sprintf("pgm: couldn't move %s to %s", oldPath, newPath), Op: "move", Trace: stack(), Retry: r, Err: err}
 	}
+
+	return nil
+}
+
+func createFile(name string) (*os.File, error) {
+	f, err := os.Create(name)
+	r := false
+	if err != nil {
+		if isBadNetPath(err) {
+			r = true
+		}
+		return nil, &ServiceError{Msg: "pgm: couldn't create " + name + " local machine", Op: "createFile", Trace: stack(), Retry: r, Err: err}
+	}
+
+	return f, nil
+}
+
+func openFile(name string) (*os.File, error) {
+	f, err := os.Open(name)
+	r := false
+	if err != nil {
+		if isBadNetPath(err) { // check if its network-error
+			r = true
+		}
+		return nil, &ServiceError{Msg: "pgm: couldn't open file" + name, Op: "openFile", Trace: stack(), Retry: r, Err: err}
+	}
+
+	return f, nil
+}
+
+func isBadNetPath(err error) bool {
+	var sysErr syscall.Errno
+	if errors.As(err, &sysErr) && (uint(sysErr) == 53 || uint(sysErr) == 51) {
+		// 53 The network path was not found.
+		// 51 The remote computer is not available.
+		return true
+	}
+	return false
+}
+
+// newName returns new name as (file-name + file-hash + .QRP)
+func newName(f *os.File) (string, error) {
+	f.Seek(0, 0)
+	hash, err := getHash(f)
+	if err != nil {
+		return "", err
+	}
+
+	clean, _ := strings.CutSuffix(path.Base(f.Name()), path.Ext(f.Name()))
+	clean = strings.ReplaceAll(clean, " ", "_")
+	ext := ".QRP"
+	return fmt.Sprintf("%s_x%s%s", clean, hash, ext), nil
+}
+
+func getHash(w io.WriterTo) (string, error) {
+	h := sha1.New()
+	_, err := w.WriteTo(h)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+type ServiceError struct {
+	Msg   string
+	Op    string
+	Trace string
+	Retry bool
+	Err   error
+}
+
+func (e *ServiceError) Error() string {
+	return fmt.Sprintf("%s %s %s %s", e.Msg, e.Op, e.Trace, e.Err.Error())
+}
+
+func (e *ServiceError) Unwrap() error { return e.Err }
+
+func (s *PGMService) alertIncomingFile() {
+	panic("not implemented!")
 }

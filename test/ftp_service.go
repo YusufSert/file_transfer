@@ -1,4 +1,4 @@
-package services
+package main
 
 import (
 	"context"
@@ -790,13 +790,6 @@ func (s *FTP) ListFiles(ctx context.Context, rootPath string) ([]os.FileInfo, er
 	}
 	fc.releaseConn(err)
 	return files, nil
-}
-
-func stack() string {
-	logger.Debug("stack")
-	var buf [2 << 10]byte
-	return string(buf[:runtime.Stack(buf[:], false)])
-
 }
 
 // withLock runs while holding lk.
