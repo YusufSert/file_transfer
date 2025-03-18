@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"pgm/services"
+	"pgm/tools/logger"
 	"time"
 )
 
@@ -22,11 +23,11 @@ func main() {
 		HeartBeatInterval:   time.Second * 1,
 	}
 
-	agent, err := services.NewLogAgent()
+	agent, err := logger.NewLogAgent()
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	// todo: loglara caller field ekle we cağıran file adı olsun main.go, fpt_service.go
 	pgm, err := services.NewPGMService(cfg, agent)
 	ctx := context.Background()
 	go agent.Run(ctx)

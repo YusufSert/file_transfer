@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -49,44 +48,45 @@ func main() {
 		}
 	*/
 	/*
-	   fileW, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND, 0644)
-	   if err != nil {
-	       log.Fatal(err.Error())
-	   }
-	   defer fileW.Close()
-	   l := slog.New(slog.NewJSONHandler(fileW, nil)).WithGroup("data")
-	   for i := 0; i < 10; i++ {
-	       l.Error("error log", "err", errors.New("test-error"))
-	       l.Info("info log", "id", 1000+i)
-	   }
+	   	   fileW, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND, 0644)
+	   	   if err != nil {
+	   	       log.Fatal(err.Error())
+	   	   }
+	   	   defer fileW.Close()
+	   	   l := slog.New(slog.NewJSONHandler(fileW, nil)).WithGroup("data")
+	   	   for i := 0; i < 10; i++ {
+	   	       l.Error("error log", "err", errors.New("test-error"))
+	   	       l.Info("info log", "id", 1000+i)
+	   	   }
+	       	file, err := os.Open(filePath)
+	       	if err != nil {
+	       		log.Fatal(err)
+	       	}
+
+	       	reader := bufio.NewReader(file)
+	       	var pos uint64
+	       	for {
+	       		record, err := reader.ReadBytes('\n')
+	       		if err != nil {
+	       			if err == io.EOF {
+	       				time.Sleep(1 * time.Second)
+	       				fmt.Println(err)
+	       			}
+	       		}
+	       		pos += uint64(len(record))
+	       		fmt.Println(pos)
+
+	       		if err == nil {
+	       			var r Record
+	       			err = json.Unmarshal(record, &r)
+	       			if err != nil {
+	       				log.Fatal(err)
+	       			}
+	       			fmt.Printf("%+v\n", r)
+	       		}
+	       	}
 	*/
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	reader := bufio.NewReader(file)
-	var pos uint64
-	for {
-		record, err := reader.ReadBytes('\n')
-		if err != nil {
-			if err == io.EOF {
-				time.Sleep(1 * time.Second)
-				fmt.Println(err)
-			}
-		}
-		pos += uint64(len(record))
-		fmt.Println(pos)
-
-		if err == nil {
-			var r Record
-			err = json.Unmarshal(record, &r)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("%+v\n", r)
-		}
-	}
 }
 
 type LogAgent struct {

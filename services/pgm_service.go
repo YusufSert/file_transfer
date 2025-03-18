@@ -12,6 +12,8 @@ import (
 	"os"
 	"path"
 	"pgm/filetransfer"
+	"pgm/tools"
+	"pgm/tools/logger"
 
 	"strings"
 	"sync"
@@ -45,7 +47,7 @@ type PGMConfig struct {
 	HeartBeatInterval    time.Duration
 }
 
-func NewPGMService(cfg PGMConfig, agent *LogAgent) (*PGMService, error) {
+func NewPGMService(cfg PGMConfig, agent *logger.LogAgent) (*PGMService, error) {
 	f, err := filetransfer.Open(cfg.Addr, cfg.User, cfg.Password)
 	if err != nil {
 		return nil, err
@@ -115,7 +117,7 @@ func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan str
 			// sync-list
 			infos, err := s.ftp.ListFilesContext(ctx, s.cfg.FTPReadPath)
 			if err != nil {
-				errCh <- &ServiceError{Msg: "pgm: couldn't fetch file infos from server", Op: "s.ftp.ListFilesContext", Trace: stack(), Retry: true, Err: err}
+				errCh <- &ServiceError{Msg: "pgm: couldn't fetch file infos from server", Op: "s.ftp.ListFilesContext", Trace: tools.Stack(), Retry: true, Err: err}
 				return
 			}
 
@@ -135,7 +137,7 @@ func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan str
 
 				name := path.Join(localP, i.Name())
 				// Don't check if file exists on local, server file will be deleted and of this process.
-				// Next pool it will be not on the sync-list.
+				// Next sync it will be not on the sync-list.
 				/*
 					_, err = os.Stat(name)
 					// if file not exists on local dir sync from server, otherwise log the error and continue.
@@ -152,20 +154,20 @@ func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan str
 
 				_, err = s.ftp.Copy(f, path.Join(s.cfg.FTPReadPath, i.Name()))
 				if err != nil {
-					errCh <- &ServiceError{Msg: "pgm: couldn't copy " + i.Name() + " from ftp server", Op: "s.ftp.Copy", Trace: stack(), Retry: true, Err: err}
+					errCh <- &ServiceError{Msg: "pgm: couldn't copy " + i.Name() + " from ftp server", Op: "s.ftp.Copy", Trace: tools.Stack(), Retry: true, Err: err}
 					return
 				}
 
 				nN, err := newName(f)
 				if err != nil {
-					errCh <- &ServiceError{Msg: "pgm: couldn't create newName for file: " + path.Base(f.Name()), Op: "newName", Trace: stack(), Retry: false, Err: err}
+					errCh <- &ServiceError{Msg: "pgm: couldn't create newName for file: " + path.Base(f.Name()), Op: "newName", Trace: tools.Stack(), Retry: false, Err: err}
 					return
 				}
 
 				nP := path.Join(localP, nN)
 				err = os.Rename(f.Name(), nP)
 				if err != nil {
-					errCh <- &ServiceError{Msg: fmt.Sprintf("pgm: couldn't rename oldpath: %s, newPath: %s", f.Name(), nP), Op: "os.Rename", Trace: stack(), Retry: false, Err: err} // not retryable error
+					errCh <- &ServiceError{Msg: fmt.Sprintf("pgm: couldn't rename oldpath: %s, newPath: %s", f.Name(), nP), Op: "os.Rename", Trace: tools.Stack(), Retry: false, Err: err} // not retryable error
 					return
 				}
 				f.Close()
@@ -174,7 +176,7 @@ func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan str
 					//todo: ftp.Delete can return not found error 550 code
 					err = s.ftp.Delete(path.Join(s.cfg.FTPReadPath, i.Name()))
 					if err != nil {
-						errCh <- &ServiceError{Msg: "pgm: couldn't delete " + i.Name() + " from the server", Op: "s.ftp.Delete", Trace: stack(), Retry: true, Err: err}
+						errCh <- &ServiceError{Msg: "pgm: couldn't delete " + i.Name() + " from the server", Op: "s.ftp.Delete", Trace: tools.Stack(), Retry: true, Err: err}
 						return
 					}
 				}
@@ -381,7 +383,7 @@ func (s *PGMService) listFiles(root string) ([]os.FileInfo, error) {
 			if isBadNetPath(err) {
 				r = true
 			}
-			return nil, &ServiceError{Msg: "pgm: couldn't list file infos from local machine", Op: "listFiles", Trace: stack(), Retry: r, Err: err}
+			return nil, &ServiceError{Msg: "pgm: couldn't list file infos from local machine", Op: "listFiles", Trace: tools.Stack(), Retry: r, Err: err}
 		}
 
 		info := w.Stat()
@@ -405,7 +407,7 @@ func remove(name string) error {
 		if isBadNetPath(err) {
 			r = true
 		}
-		return &ServiceError{Msg: fmt.Sprintf("pgm: couldn't remove %s", name), Op: "remove", Trace: stack(), Retry: r, Err: err}
+		return &ServiceError{Msg: fmt.Sprintf("pgm: couldn't remove %s", name), Op: "remove", Trace: tools.Stack(), Retry: r, Err: err}
 	}
 	return nil
 }
@@ -417,7 +419,7 @@ func move(oldPath, newPath string) error {
 		if isBadNetPath(err) {
 			r = true
 		}
-		return &ServiceError{Msg: fmt.Sprintf("pgm: couldn't move %s to %s", oldPath, newPath), Op: "move", Trace: stack(), Retry: r, Err: err}
+		return &ServiceError{Msg: fmt.Sprintf("pgm: couldn't move %s to %s", oldPath, newPath), Op: "move", Trace: tools.Stack(), Retry: r, Err: err}
 	}
 
 	return nil
@@ -430,7 +432,7 @@ func createFile(name string) (*os.File, error) {
 		if isBadNetPath(err) {
 			r = true
 		}
-		return nil, &ServiceError{Msg: "pgm: couldn't create " + name + " local machine", Op: "createFile", Trace: stack(), Retry: r, Err: err}
+		return nil, &ServiceError{Msg: "pgm: couldn't create " + name + " local machine", Op: "createFile", Trace: tools.Stack(), Retry: r, Err: err}
 	}
 
 	return f, nil
@@ -443,7 +445,7 @@ func openFile(name string) (*os.File, error) {
 		if isBadNetPath(err) { // check if its network-error
 			r = true
 		}
-		return nil, &ServiceError{Msg: "pgm: couldn't open file" + name, Op: "openFile", Trace: stack(), Retry: r, Err: err}
+		return nil, &ServiceError{Msg: "pgm: couldn't open file" + name, Op: "openFile", Trace: tools.Stack(), Retry: r, Err: err}
 	}
 
 	return f, nil
@@ -491,7 +493,7 @@ type ServiceError struct {
 }
 
 func (e *ServiceError) Error() string {
-	return fmt.Sprintf("%s %s %s %s", e.Msg, e.Op, e.Trace, e.Err.Error())
+	return fmt.Sprintf("%s %s %s %s", e.Op, e.Msg, e.Trace, e.Err.Error())
 }
 
 func (e *ServiceError) Unwrap() error { return e.Err }
