@@ -13,8 +13,6 @@ import (
 	"path"
 	"pgm/filetransfer"
 	"pgm/tools"
-	"pgm/tools/logger"
-
 	"strings"
 	"sync"
 	"syscall"
@@ -34,20 +32,8 @@ type PGMService struct {
 	maxTimeoutStopped int64      // Total number of workers stopped due to timout.
 	ErrStopped        int64      // Total number of workers stopped due to err.
 }
-type PGMConfig struct {
-	User, Password       string
-	Addr                 string
-	NetworkToUploadPath  string
-	NetworkOutgoingPath  string
-	NetworkIncomingPath  string
-	NetworkDuplicatePath string
-	FTPWritePath         string
-	FTPReadPath          string
-	PoolInterval         time.Duration
-	HeartBeatInterval    time.Duration
-}
 
-func NewPGMService(cfg PGMConfig, agent *logger.LogAgent) (*PGMService, error) {
+func NewPGMService(cfg PGMConfig, l *slog.Logger) (*PGMService, error) {
 	f, err := filetransfer.Open(cfg.Addr, cfg.User, cfg.Password)
 	if err != nil {
 		return nil, err
@@ -56,7 +42,7 @@ func NewPGMService(cfg PGMConfig, agent *logger.LogAgent) (*PGMService, error) {
 	return &PGMService{
 		ftp: f,
 		cfg: cfg,
-		l:   agent.Logger,
+		l:   l,
 	}, nil
 }
 
@@ -500,4 +486,17 @@ func (e *ServiceError) Unwrap() error { return e.Err }
 
 func (s *PGMService) alertIncomingFile() {
 	panic("not implemented!")
+}
+
+type PGMConfig struct {
+	User, Password       string
+	Addr                 string
+	NetworkToUploadPath  string
+	NetworkOutgoingPath  string
+	NetworkIncomingPath  string
+	NetworkDuplicatePath string
+	FTPWritePath         string
+	FTPReadPath          string
+	PoolInterval         time.Duration
+	HeartBeatInterval    time.Duration
 }

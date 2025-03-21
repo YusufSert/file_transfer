@@ -45,7 +45,6 @@ func (c *Client) run(ctx context.Context) {
 
 	d := c.BatchMaxWait
 	t := time.NewTimer(d)
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -91,7 +90,7 @@ func (c *Client) send(b [][]any) {
 	res, err := c.c.Post(c.URL, "application/json", bytes.NewReader(data))
 	if err != nil {
 		c.err = err
-	} else if res.StatusCode != http.StatusOK {
+	} else if res.StatusCode != http.StatusNoContent { // loki sends no-content 204 if logs written successful
 		c.err = errors.New("loki_client: fail sending log to loki with status: " + res.Status) // todo: maybe create error, so used decide what to do with error
 	}
 }
@@ -102,6 +101,7 @@ func (c *Client) Err() error {
 
 // Stop stops sender goroutine from sending logs to [loki]
 func (c *Client) Stop() {
+	c.c.CloseIdleConnections()
 	c.stop()
 }
 

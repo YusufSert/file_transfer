@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"pgm/services"
 	"pgm/tools/logger"
+	"pgm/tools/loki"
 	"time"
 )
 
@@ -22,18 +24,31 @@ func main() {
 		PoolInterval:        time.Second * 5,
 		HeartBeatInterval:   time.Second * 1,
 	}
-
-	agent, err := logger.NewLogAgent()
+	r, err := os.OpenFile("./log2.txt", os.O_RDONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// todo: loglara caller field ekle we cağıran file adı olsun main.go, fpt_service.go
-	pgm, err := services.NewPGMService(cfg, agent)
+	defer r.Close()
+	w, err := os.OpenFile("./log2.txt", os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer w.Close()
+
+	l, err := logger.NewLogger(w)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	ctx := context.Background()
-	go agent.Run(ctx)
 
-	//todo: check behavior of close(channel) with select statement.
+	t, err := loki.NewTail(r, l.Logger)
+	go t.Run(ctx)
 
-	err = pgm.Run(ctx)
-	log.Fatal(err)
+	pgm, err := services.NewPGMService(cfg, l.Logger)
+	if err = pgm.Run(ctx); err != nil {
+		log.Fatal(err)
+	}
 }
+
+//todo: check behavior of close(channel) with select statement.

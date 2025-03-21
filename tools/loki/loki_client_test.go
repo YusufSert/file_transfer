@@ -16,7 +16,7 @@ func TestLokiClient(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var logs []string = []string{"fizz buzz debug", "foo, bar WARNING", "kudimmmm error"}
+	var logs []string = []string{"fizz buzz debug", "foo, bar warn", "kudimmmm error"}
 	for _, l := range logs {
 		client.Send(l) // sends logs to sender goroutine.
 	}

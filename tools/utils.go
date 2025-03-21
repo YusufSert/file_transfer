@@ -1,8 +1,6 @@
 package tools
 
 import (
-	"github.com/fsnotify/fsnotify"
-	"github.com/spf13/viper"
 	"runtime"
 )
 
@@ -11,6 +9,7 @@ func Stack() string {
 	return string(buf[:runtime.Stack(buf[:], false)])
 }
 
+/*
 func ReadConfig() error {
 	v := viper.New()
 	v.SetConfigName("config")
@@ -25,3 +24,6 @@ func ReadConfig() error {
 
 	})
 }
+
+
+*/
