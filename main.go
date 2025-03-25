@@ -16,9 +16,10 @@ func main() {
 		Addr:                "localhost:21",
 		User:                "yusufcan",
 		Password:            "Banana@@",
-		NetworkToUploadPath: "/home/yusufcan/Desktop/network_toupload",
-		NetworkOutgoingPath: "/home/yusufcan/Desktop/network_outgoing",
-		NetworkIncomingPath: "/home/yusufcan/Desktop/network_incoming",
+		NetworkToUploadPath: "Gidecek",
+		NetworkOutgoingDir:  "Giden",
+		NetworkIncomingDir:  "Gelen",
+		NetworkBasePath:     "/home/yusufcan/Desktop/base",
 		FTPWritePath:        "/home/yusufcan/Desktop/ftp_write",
 		FTPReadPath:         "/home/yusufcan/Desktop/ftp_read",
 		PoolInterval:        time.Second * 5,
@@ -39,7 +40,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	ctx := context.Background()
 
 	t, err := loki.NewTail(r, l.Logger)

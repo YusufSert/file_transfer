@@ -11,7 +11,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path"
 	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -87,6 +89,32 @@ func main() {
 	       	}
 	*/
 
+	fmt.Println(time.Now().Format("2006"))
+}
+
+var base string = "./SANTRAL/ORTAK/SCS/OFIS_DESTEK/POLIS/PGM"
+
+type bok struct {
+	year int
+}
+
+// todo: maybe implement function that returns dir.
+func (b *bok) test(dir string) (string, error) {
+	currYear := time.Now().Year()
+	var fullPath string
+	if b.year == currYear {
+		fullPath = path.Join(base, strconv.Itoa(b.year), dir)
+		return fullPath, nil
+	}
+
+	b.year = currYear
+
+	fullPath = path.Join(base, strconv.Itoa(b.year), dir)
+	err := os.MkdirAll(fullPath, 0750)
+	if err == nil || errors.Is(err, os.ErrExist) {
+		return fullPath, nil
+	}
+	return "", err
 }
 
 type LogAgent struct {
