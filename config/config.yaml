@@ -1,0 +1,13 @@
+addr:                "localhost:21",
+user:                "yusufcan",
+password:            "Banana@@",
+networkToUploadPath: "/home/yusufcan/Desktop/network_toupload",
+networkOutgoingPath: "/home/yusufcan/Desktop/network_outgoing",
+networkIncomingPath: "/home/yusufcan/Desktop/network_incoming",
+ftpWritePath:        "/home/yusufcan/Desktop/ftp_write",
+ftpReadPath:         "/home/yusufcan/Desktop/ftp_read",
+poolInterval:        time.Second * 5,
+heartbeatInterval:   time.Second * 1,
+logFilePath:
+logLevel: -4
+lokiPushURl:
