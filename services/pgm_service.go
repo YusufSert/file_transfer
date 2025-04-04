@@ -1,12 +1,14 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha1"
 	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/kr/fs"
+	"github.com/spf13/viper"
 	"io"
 	"log/slog"
 	"os"
@@ -27,7 +29,7 @@ type PGMService struct {
 	r        *sql.DB
 	l        *slog.Logger
 	renameFn func(name string) string
-	cfg      PGMConfig
+	cfg      *PGMConfig
 
 	mu                sync.Mutex //protects the following fields
 	maxTimeoutStopped int64      // Total number of workers stopped due to timout.
@@ -35,10 +37,10 @@ type PGMService struct {
 	year              int        // current file year for pgm files.
 }
 
-func NewPGMService(cfg PGMConfig, l *slog.Logger) (*PGMService, error) {
+func NewPGMService(cfg *PGMConfig, l *slog.Logger) (*PGMService, error) {
 	f, err := filetransfer.Open(cfg.Addr, cfg.User, cfg.Password)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("pgm: error opening ftp conn %w", err)
 	}
 
 	return &PGMService{
@@ -68,7 +70,6 @@ func (s *PGMService) Run(ctx context.Context) error {
 
 var debugSync bool = true
 
-// todo: alert user that new file syncing
 // syncLocal syncs local files by pooling the ftp-server with s.cfg.PoolInterval
 func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan struct{}, <-chan error) {
 	logger := s.l.With("worker", "syncLocal")
@@ -94,7 +95,7 @@ func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan str
 				}
 				continue
 			case <-poolTimer.C:
-				logger.Debug("pgm: pooling", "src", path.Join(s.cfg.Addr, s.cfg.FTPReadPath), "dst", path.Join(s.cfg.NetworkBasePath, time.Now().Format("2006"), s.cfg.NetworkIncomingDir))
+				logger.Debug("pgm: pooling", "src", path.Join(s.cfg.Addr, s.cfg.FTPReadPath), "dst", path.Join(s.cfg.NetworkBasePath, time.Now().Format("2006"), s.cfg.NetworkIncomingPath))
 			case <-ctx.Done():
 				errCh <- ctx.Err()
 				return
@@ -119,15 +120,6 @@ func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan str
 				default:
 				}
 				logger.Debug("pgm: trying to sync file", "ftp_file_name", i.Name())
-
-				s.mu.Lock()
-				netP, err := s.getPathWithLock(s.cfg.NetworkIncomingDir)
-				s.mu.Unlock()
-				if err != nil {
-					errCh <- err
-					return
-				}
-				name := path.Join(netP, i.Name())
 				// Don't check if file exists on local, server file will be deleted and of this process.
 				// Next sync it will be not on the sync-list.
 				/*
@@ -138,28 +130,37 @@ func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan str
 						continue
 					}
 				*/
-				f, err := createFile(name) // if windows err-code 53 then we should rtry
-				if err != nil {
-					errCh <- err
-					return
-				}
-
-				_, err = s.ftp.Copy(f, path.Join(s.cfg.FTPReadPath, i.Name()))
+				buf := &bytes.Buffer{}
+				_, err = s.ftp.Copy(buf, path.Join(s.cfg.FTPReadPath, i.Name()))
 				if err != nil {
 					errCh <- &ServiceError{Msg: "pgm: couldn't copy " + i.Name() + " from ftp server", Op: "s.ftp.Copy", Trace: tools.Stack(), Retry: true, Err: err}
 					return
 				}
 
-				nN, err := newName(f)
+				newFileName, err := newName(buf.Bytes(), i.Name())
 				if err != nil {
-					errCh <- &ServiceError{Msg: "pgm: couldn't create newName for file: " + path.Base(f.Name()), Op: "newName", Trace: tools.Stack(), Retry: false, Err: err}
+					errCh <- err
 					return
 				}
 
-				nP := path.Join(netP, nN)
-				err = os.Rename(f.Name(), nP)
+				s.mu.Lock()
+				dirPath, err := s.getPathLocked(s.cfg.NetworkIncomingPath)
+				s.mu.Unlock()
 				if err != nil {
-					errCh <- &ServiceError{Msg: fmt.Sprintf("pgm: couldn't rename oldpath: %s, newPath: %s", f.Name(), nP), Op: "os.Rename", Trace: tools.Stack(), Retry: false, Err: err} // not retryable error
+					errCh <- err
+					return
+				}
+
+				f, err := createFile(path.Join(dirPath, newFileName)) // if windows err-code 53 then we should rtry
+				if err != nil {
+					errCh <- err
+					return
+				}
+
+				_, err = io.Copy(f, buf)
+				if err != nil {
+					errCh <- &ServiceError{Msg: fmt.Sprintf("pgm: couldn't write to file %s", newFileName), Op: "io.Copy", Trace: tools.Stack(), Retry: true, Err: err}
+					f.Close()
 					return
 				}
 				f.Close()
@@ -173,7 +174,7 @@ func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan str
 					}
 				}
 
-				logger.Info("pgm: file synced", "ftp_file_name", i.Name(), "local_file_name", f.Name())
+				logger.Info("pgm: file synced", "ftp_file_name", i.Name(), "network_name", f.Name())
 			}
 			if !poolTimer.Stop() {
 				select {
@@ -188,7 +189,7 @@ func (s *PGMService) syncLocal(ctx context.Context, d time.Duration) (<-chan str
 	return heartbeatCh, errCh
 }
 
-// syncServer reads NetworkToUploadPath and writes files to FTPWritePath and moves them to NetworkOutgoingDir
+// syncServer reads NetworkToUploadPath and writes files to FTPWritePath and moves them to NetworkOutgoingPath
 func (s *PGMService) syncServer(ctx context.Context, d time.Duration) (<-chan struct{}, <-chan error) {
 	logger := s.l.With("worker", "syncServer")
 
@@ -199,7 +200,7 @@ func (s *PGMService) syncServer(ctx context.Context, d time.Duration) (<-chan st
 		defer close(errCh)
 		defer close(heartbeatCh)
 
-		localP := path.Join(s.cfg.NetworkBasePath, time.Now().Format("2006"), s.cfg.NetworkToUploadPath)
+		dirPath := path.Join(s.cfg.NetworkBasePath, time.Now().Format("2006"), s.cfg.NetworkToUploadPath)
 
 		poolTimer := time.NewTimer(s.cfg.PoolInterval)
 		pulse := time.NewTicker(d)
@@ -215,14 +216,14 @@ func (s *PGMService) syncServer(ctx context.Context, d time.Duration) (<-chan st
 				}
 				continue
 			case <-poolTimer.C:
-				logger.Debug("pgm: pooling", "src", localP, "dst", path.Join(s.cfg.Addr, s.cfg.FTPWritePath))
+				logger.Debug("pgm: pooling", "src", dirPath, "dst", path.Join(s.cfg.Addr, s.cfg.FTPWritePath))
 			case <-ctx.Done():
 				errCh <- ctx.Err()
 				return
 			}
 
 			// sync-list
-			infos, err := s.listFiles(localP)
+			infos, err := s.listFiles(dirPath)
 			if err != nil {
 				errCh <- err
 				return
@@ -240,27 +241,27 @@ func (s *PGMService) syncServer(ctx context.Context, d time.Duration) (<-chan st
 					return
 				default:
 				}
-				logger.Info("pgm: trying to sync file", "local_file_name", i.Name())
+				logger.Debug("pgm: trying to sync file", "network_name", i.Name())
 
 				//todo: try all io operations with vpn open and close and see the erros, bc windows uses networkDirs
-				f, err := openFile(path.Join(localP, i.Name()))
+				f, err := openFile(path.Join(dirPath, i.Name()))
 				if err != nil {
 					errCh <- err
 					return
 				}
 
-				name := path.Join(s.cfg.FTPWritePath, i.Name())
-				err = s.ftp.Store(name, f)
+				filePath := path.Join(s.cfg.FTPWritePath, i.Name())
+				err = s.ftp.Store(filePath, f)
 				if err != nil {
-					errCh <- fmt.Errorf("pgm: couldn't store %s to server %w", i.Name(), err) // todo: change this to ServiceError{}
+					errCh <- &ServiceError{Msg: "pgm: couldn't store" + i.Name() + "to server", Op: "s.ftp.Store", Trace: tools.Stack(), Retry: true, Err: err}
 					return
 				}
 
 				s.mu.Lock()
-				outP, err := s.getPathWithLock(s.cfg.NetworkOutgoingDir)
+				outDir, err := s.getPathLocked(s.cfg.NetworkOutgoingPath)
 				s.mu.Unlock()
 
-				err = move(f.Name(), path.Join(outP, i.Name()))
+				err = move(f.Name(), path.Join(outDir, i.Name()))
 				if err != nil {
 					errCh <- err
 					f.Close()
@@ -270,13 +271,13 @@ func (s *PGMService) syncServer(ctx context.Context, d time.Duration) (<-chan st
 
 				//remove yapamıyor cunku move() zaten file ı kaldırdı bunu test error ları için bırak kalsın burda error istediğinde bunu uncommnet yap
 				/*
-					err = remove(path.Join(localP, i.Name()))
+					err = remove(path.Join(dirPath, i.Name()))
 					if err != nil {
 						errCh <- err
 						return
 					}
 				*/
-				logger.Info("pgm: file synced", "local_file_name", f.Name(), "ftp_file_name", i.Name())
+				logger.Info("pgm: file synced", "network_name", f.Name(), "ftp_name", i.Name())
 			}
 			if !poolTimer.Stop() {
 				select {
@@ -367,20 +368,6 @@ func (s *PGMService) monitor(ctx context.Context, fn worker, wName string) <-cha
 	return errCh
 }
 
-func (s *PGMService) moveTo(r io.Reader, name string) error {
-	f, err := os.Create(name)
-	if err != nil {
-		return fmt.Errorf("pgm: couldn't move the file %w", err)
-	}
-	defer f.Close()
-
-	_, err = f.ReadFrom(r)
-	if err != nil {
-		return fmt.Errorf("pgm: couldn't move the file %w", err)
-	}
-	return nil
-}
-
 func (s *PGMService) listFiles(root string) ([]os.FileInfo, error) {
 	var fileInfos []os.FileInfo
 	w := fs.Walk(root)
@@ -402,7 +389,7 @@ func (s *PGMService) listFiles(root string) ([]os.FileInfo, error) {
 	return fileInfos, nil
 }
 
-func (s *PGMService) getPathWithLock(dir string) (string, error) {
+func (s *PGMService) getPathLocked(dir string) (string, error) {
 	currYear := time.Now().Year()
 	var fullPath string
 	if s.year == currYear {
@@ -412,12 +399,12 @@ func (s *PGMService) getPathWithLock(dir string) (string, error) {
 
 	s.year = currYear
 
-	fullPath = path.Join(s.cfg.NetworkBasePath, strconv.Itoa(s.year), s.cfg.NetworkIncomingDir)
+	fullPath = path.Join(s.cfg.NetworkBasePath, strconv.Itoa(s.year), s.cfg.NetworkIncomingPath)
 	err := mkdir(fullPath)
 	if err != nil {
 		return "", err
 	}
-	fullPath = path.Join(s.cfg.NetworkBasePath, strconv.Itoa(s.year), s.cfg.NetworkOutgoingDir)
+	fullPath = path.Join(s.cfg.NetworkBasePath, strconv.Itoa(s.year), s.cfg.NetworkOutgoingPath)
 	err = mkdir(fullPath)
 	if err != nil {
 		return "", err
@@ -426,10 +413,8 @@ func (s *PGMService) getPathWithLock(dir string) (string, error) {
 	return path.Join(s.cfg.NetworkBasePath, strconv.Itoa(s.year), dir), nil
 }
 
+// All I/O operations bad network failure error detail abstracted away from caller by wrapping them by another function
 //
-//All I/O operations bad network failure error detail abstracted away from caller by wrapping them by another function
-//
-
 // mkdir creates dir along with any necessary parents.
 func mkdir(name string) error {
 	r := false
@@ -506,26 +491,24 @@ func isBadNetPath(err error) bool {
 }
 
 // newName returns new name as (file-name + file-hash + .QRP)
-func newName(f *os.File) (string, error) {
-	f.Seek(0, 0)
-	hash, err := getHash(f)
+func newName(b []byte, name string) (string, error) {
+	hash, err := getHash(b)
 	if err != nil {
-		return "", err
+		return "", &ServiceError{Msg: "pgm: couldn't create newName for file: " + name, Op: "newName", Trace: tools.Stack(), Retry: false, Err: err}
 	}
 
-	clean, _ := strings.CutSuffix(path.Base(f.Name()), path.Ext(f.Name()))
+	clean, _ := strings.CutSuffix(name, path.Ext(name))
 	clean = strings.ReplaceAll(clean, " ", "_")
-	ext := ".QRP"
-	return fmt.Sprintf("%s_x%s%s", clean, hash, ext), nil
+	return fmt.Sprintf("%s_x%s%s", clean, hash, ".QRP"), nil
 }
 
-func getHash(w io.WriterTo) (string, error) {
+func getHash(b []byte) (string, error) {
 	h := sha1.New()
-	_, err := w.WriteTo(h)
+	_, err := h.Write(b)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%x", h.Sum(nil)), nil
+	return fmt.Sprintf("%x", h.Sum(nil)[:4]), nil
 }
 
 type ServiceError struct {
@@ -550,12 +533,61 @@ type PGMConfig struct {
 	User, Password       string
 	Addr                 string
 	NetworkToUploadPath  string
-	NetworkOutgoingDir   string
-	NetworkIncomingDir   string
+	NetworkOutgoingPath  string
+	NetworkIncomingPath  string
 	NetworkDuplicatePath string
 	NetworkBasePath      string
 	FTPWritePath         string
 	FTPReadPath          string
 	PoolInterval         time.Duration
 	HeartBeatInterval    time.Duration
+	LogFilePath          string
+	LokiPushURl          string
+	LogLevel             slog.Level
+}
+
+func ReadPGMConfig(path string) (*PGMConfig, error) {
+	v := viper.New()
+	v.SetConfigName("config")
+	v.SetConfigType("yaml")
+	v.AddConfigPath(path)
+	err := v.ReadInConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range v.AllKeys() {
+		if !v.IsSet(key) {
+			return nil, fmt.Errorf("pgm: %s not set", key)
+		}
+	}
+
+	poolInterval, err := time.ParseDuration(v.GetString("poolInterval"))
+	if err != nil {
+		return nil, fmt.Errorf("pgm: couldn't parse poolInterval %s", v.GetString("poolInterval"))
+	}
+	heartbeatInterval, err := time.ParseDuration(v.GetString("heartBeatInterval"))
+	if err != nil {
+		return nil, fmt.Errorf("pgm: couldn't parse heartBeatInterval %s", v.GetString("heartBeatInterval"))
+	}
+
+	logLevel := v.GetInt("logLevel")
+
+	return &PGMConfig{
+		User:                 v.GetString("user"),
+		Password:             v.GetString("password"),
+		Addr:                 v.GetString("addr"),
+		NetworkToUploadPath:  v.GetString("networkToUploadPath"),
+		NetworkOutgoingPath:  v.GetString("networkOutgoingPath"),
+		NetworkIncomingPath:  v.GetString("networkIncomingPath"),
+		NetworkDuplicatePath: v.GetString("networkDuplicatePath"),
+		NetworkBasePath:      v.GetString("networkBasePath"),
+		FTPWritePath:         v.GetString("ftpWritePath"),
+		FTPReadPath:          v.GetString("ftpReadPath"),
+		LogFilePath:          v.GetString("logFilePath"),
+		LokiPushURl:          v.GetString("lokiPushURL"),
+		LogLevel:             slog.Level(logLevel), //gwegwg
+		PoolInterval:         poolInterval,
+		HeartBeatInterval:    heartbeatInterval,
+	}, nil
 }

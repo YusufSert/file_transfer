@@ -375,7 +375,7 @@ func (s *FTP) putConn(fc *ftpConn, err error, resetSession bool) {
 	if !fc.inUse {
 		s.mu.Unlock()
 		if debugGetPut {
-			fmt.Printf("putConn(%v) DUBLICATE was: %s\n\nPREVIOS was %s", fc, stack(), s.lastPut[fc])
+
 		}
 		panic("ftp-service: connection returned that was never out") // out means: out of FTP.freeConn
 	}
@@ -387,7 +387,7 @@ func (s *FTP) putConn(fc *ftpConn, err error, resetSession bool) {
 	}
 
 	if debugGetPut {
-		s.lastPut[fc] = stack()
+
 	}
 	fmt.Println("putConn setting inUse to false")
 	fc.inUse = false

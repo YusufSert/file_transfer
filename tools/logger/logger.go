@@ -1,29 +1,42 @@
 package logger
 
 import (
-	"io"
-	"log/slog"
+    "log"
+    "log/slog"
+    "os"
 )
 
 type Logger struct {
-	Logger *slog.Logger
-	Level  *slog.LevelVar
+    Logger *slog.Logger
+    Level  *slog.LevelVar
 
-	w io.Writer
+    w *os.File
 }
 
-func NewLogger(w io.Writer) (*Logger, error) {
-	level := &slog.LevelVar{}
-	level.Set(slog.LevelDebug)
-	logger := slog.New(slog.NewJSONHandler(w, &slog.HandlerOptions{Level: level}))
+func NewLogger(filePath string) (*Logger, error) {
+    w, err := os.OpenFile(filePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+    if err != nil {
+        log.Fatal(err)
+    }
 
-	a := &Logger{
-		Logger: logger,
-		Level:  level,
-		w:      w,
-	}
+    level := &slog.LevelVar{}
+    level.Set(slog.LevelDebug)
+    logger := slog.New(slog.NewJSONHandler(w, &slog.HandlerOptions{Level: level}))
 
-	return a, nil
+    a := &Logger{
+        Logger: logger,
+        Level:  level,
+        w:      w,
+    }
+
+    return a, nil
+}
+
+func (l *Logger) SetLevel(level slog.Level) {
+    l.Level.Set(level)
+}
+func (l *Logger) Close() {
+    l.w.Close()
 }
 
 /*

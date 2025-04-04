@@ -1,13 +1,14 @@
-addr:                "localhost:21",
-user:                "yusufcan",
-password:            "Banana@@",
-networkToUploadPath: "/home/yusufcan/Desktop/network_toupload",
-networkOutgoingPath: "/home/yusufcan/Desktop/network_outgoing",
-networkIncomingPath: "/home/yusufcan/Desktop/network_incoming",
-ftpWritePath:        "/home/yusufcan/Desktop/ftp_write",
-ftpReadPath:         "/home/yusufcan/Desktop/ftp_read",
-poolInterval:        time.Second * 5,
-heartbeatInterval:   time.Second * 1,
-logFilePath:
+addr:                localhost:21
+user:                yusufcan
+password:            Banana@@
+networkBasePath:     /home/yusufcan/Desktop/base
+networkToUploadPath: /Gidecek
+networkOutgoingPath: /Giden
+networkIncomingPath: /Gelen
+ftpWritePath:        /home/yusufcan/Desktop/ftp_write
+ftpReadPath:         /home/yusufcan/Desktop/ftp_read
+poolInterval:        5s
+heartbeatInterval:   1s
+logFilePath: ./log.txt
 logLevel: -4
-lokiPushURl:
+lokiPushURl: http://localhost:3100/loki/api/v1/push

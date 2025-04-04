@@ -1,0 +1,66 @@
+{"time":"2025-04-03T15:55:09.343298557+03:00","level":"ERROR","msg":"log-tail: error writing record to loki","error":"Post \"http://localhost:3100/loki/api/v1/push\": dial tcp [::1]:3100: connect: connection refused"}
+{"time":"2025-04-03T15:55:14.34423478+03:00","level":"ERROR","msg":"log-tail: error writing record to loki","error":"Post \"http://localhost:3100/loki/api/v1/push\": dial tcp [::1]:3100: connect: connection refused"}
+{"time":"2025-04-03T15:55:18.115973406+03:00","level":"INFO","msg":"tail: starting to tail"}
+{"time":"2025-04-03T15:55:23.17139584+03:00","level":"INFO","msg":"pgm: file synced","worker":"syncLocal","ftp_file_name":"GPM-03-1-6-25-8.txt","local_file_name":"/home/yusufcan/Desktop/base/2025/Gelen/GPM-03-1-6-25-8_x16f1a8a2.QRP"}
+{"time":"2025-04-03T15:55:26.439676155+03:00","level":"INFO","msg":"tail: starting to tail"}
+{"time":"2025-04-03T15:55:27.264581805+03:00","level":"INFO","msg":"tail: starting to tail"}
+{"time":"2025-04-03T15:55:32.315386371+03:00","level":"INFO","msg":"pgm: file synced","worker":"syncLocal","ftp_file_name":"GPM-03-1-6-25-8.txt","local_file_name":"/home/yusufcan/Desktop/base/2025/Gelen/GPM-03-1-6-25-8_x16f1a8a2.QRP"}
+{"time":"2025-04-03T15:55:33.268556969+03:00","level":"INFO","msg":"tail: starting to tail"}
+{"time":"2025-04-03T15:55:33.26861086+03:00","level":"DEBUG","msg":"pgm: staring worker","monitor":"syncServer"}
+{"time":"2025-04-03T15:55:33.26862578+03:00","level":"DEBUG","msg":"pgm: staring worker","monitor":"syncLocal"}
+{"time":"2025-04-03T15:55:34.26868583+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T15:55:34.26867644+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T15:55:35.26872051+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T15:55:35.268751541+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T15:55:36.26879874+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T15:55:36.26879866+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T15:55:37.268827851+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T15:55:37.268840221+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T15:55:38.268910443+03:00","level":"DEBUG","msg":"pgm: pooling","worker":"syncLocal","src":"localhost:21/home/yusufcan/Desktop/ftp_read","dst":"/home/yusufcan/Desktop/base/2025/Gelen"}
+{"time":"2025-04-03T15:55:38.268905423+03:00","level":"DEBUG","msg":"pgm: pooling","worker":"syncServer","src":"/home/yusufcan/Desktop/base/2025/Gidecek","dst":"localhost:21/home/yusufcan/Desktop/ftp_write"}
+{"time":"2025-04-03T15:55:38.269045456+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T15:55:38.275965989+03:00","level":"DEBUG","msg":"pgm: trying to sync file","worker":"syncLocal","ftp_file_name":"GPM-03-1-6-25-8.txt"}
+{"time":"2025-04-03T15:55:38.275974069+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T15:55:38.323372064+03:00","level":"INFO","msg":"pgm: file synced","worker":"syncLocal","ftp_file_name":"GPM-03-1-6-25-8.txt","local_file_name":"/home/yusufcan/Desktop/base/2025/Gelen/GPM-03-1-6-25-8_x16f1a8a2.QRP"}
+{"time":"2025-04-03T15:55:39.269357496+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T15:55:39.269365686+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:48:51.508337972+03:00","level":"INFO","msg":"tail: starting to tail"}
+{"time":"2025-04-03T16:48:51.508513917+03:00","level":"DEBUG","msg":"pgm: staring worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:48:51.508526927+03:00","level":"DEBUG","msg":"pgm: staring worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:48:52.508556846+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:48:52.508614007+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:48:53.508653138+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:48:53.508660758+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:48:54.508770402+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:48:54.508782222+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:48:55.508669406+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:48:55.508693447+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:48:56.508757225+03:00","level":"DEBUG","msg":"pgm: pooling","worker":"syncServer","src":"/home/yusufcan/Desktop/base/2025/Gidecek","dst":"localhost:21/home/yusufcan/Desktop/ftp_write"}
+{"time":"2025-04-03T16:48:56.508884038+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:48:56.508986791+03:00","level":"DEBUG","msg":"pgm: pooling","worker":"syncLocal","src":"localhost:21/home/yusufcan/Desktop/ftp_read","dst":"/home/yusufcan/Desktop/base/2025/Gelen"}
+{"time":"2025-04-03T16:48:56.516163364+03:00","level":"DEBUG","msg":"pgm: trying to sync file","worker":"syncLocal","ftp_file_name":"GPM-03-1-6-25-8.txt"}
+{"time":"2025-04-03T16:48:56.516170934+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:48:56.559433067+03:00","level":"INFO","msg":"pgm: file synced","worker":"syncLocal","ftp_file_name":"GPM-03-1-6-25-8.txt","local_file_name":"/home/yusufcan/Desktop/base/2025/Gelen/GPM-03-1-6-25-8_x16f1a8a2.QRP"}
+{"time":"2025-04-03T16:48:57.50944144+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:48:57.509468491+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:51:26.128800138+03:00","level":"INFO","msg":"tail: starting to tail"}
+{"time":"2025-04-03T16:51:26.128860329+03:00","level":"DEBUG","msg":"pgm: staring worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:51:26.128874269+03:00","level":"DEBUG","msg":"pgm: staring worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:51:27.128977854+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:51:27.129002925+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:51:28.129031301+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:51:28.129056632+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:51:29.12908177+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:51:29.129116781+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:51:30.129153407+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:51:30.129169208+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:51:31.129214669+03:00","level":"DEBUG","msg":"pgm: pooling","worker":"syncLocal","src":"localhost:21/home/yusufcan/Desktop/ftp_read","dst":"/home/yusufcan/Desktop/base/2025/Gelen"}
+{"time":"2025-04-03T16:51:31.12924706+03:00","level":"DEBUG","msg":"pgm: pooling","worker":"syncServer","src":"/home/yusufcan/Desktop/base/2025/Gidecek","dst":"localhost:21/home/yusufcan/Desktop/ftp_write"}
+{"time":"2025-04-03T16:51:31.129339772+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:51:31.135804579+03:00","level":"DEBUG","msg":"pgm: trying to sync file","worker":"syncLocal","ftp_file_name":"GPM-03-1-6-25-8.txt"}
+{"time":"2025-04-03T16:51:31.135823659+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:51:31.183580342+03:00","level":"INFO","msg":"pgm: file synced","worker":"syncLocal","ftp_file_name":"GPM-03-1-6-25-8.txt","local_file_name":"/home/yusufcan/Desktop/base/2025/Gelen/GPM-03-1-6-25-8_x16f1a8a2.QRP"}
+{"time":"2025-04-03T16:51:32.129638667+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:51:32.129678308+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}
+{"time":"2025-04-03T16:51:33.129817702+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncLocal"}
+{"time":"2025-04-03T16:51:33.129829682+03:00","level":"DEBUG","msg":"pgm: receiving heartbeat from worker","monitor":"syncServer"}

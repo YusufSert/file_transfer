@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"os"
 	"time"
 )
 
@@ -18,7 +19,12 @@ type Tail struct {
 	err      error
 }
 
-func NewTail(r io.ReadCloser, l *slog.Logger) (*Tail, error) {
+func NewTail(filePath string, l *slog.Logger) (*Tail, error) {
+	r, err := os.OpenFile(filePath, os.O_RDONLY, 0644)
+	if err != nil {
+		return nil, err
+	}
+
 	// NewClient initialize goroutine waiting for new logs to be batched and send to loki
 	c, err := NewClient(Config{
 		URL:          "http://localhost:3100/loki/api/v1/push",
@@ -39,14 +45,13 @@ func NewTail(r io.ReadCloser, l *slog.Logger) (*Tail, error) {
 	return a, nil
 }
 
-func (a *Tail) Run(ctx context.Context) error {
+func (a *Tail) Run(ctx context.Context) {
+	a.l.Info("tail: starting to tail")
 	a.tail(ctx)
-	return a.err
 }
 
 func (a *Tail) tail(ctx context.Context) {
-	a.l.Info("log-agent: agent starting to tail")
-	backoff, backOffMax := time.Millisecond*300, time.Second*60
+	backoff, backOffMax := time.Second*5, time.Second*60
 	d := backoff
 
 	r := bufio.NewReader(a.r)
@@ -82,7 +87,6 @@ func (a *Tail) tail(ctx context.Context) {
 			if err = a.c.Err(); err != nil {
 				a.err = err
 				a.l.Error("log-tail: error writing record to loki", "error", err)
-				break
 			} else {
 				d = backoff
 			}
