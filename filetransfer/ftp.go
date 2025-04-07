@@ -845,6 +845,7 @@ func (s *FTP) Store(p string, r io.Reader) error {
 	if err != nil {
 		return fmt.Errorf("ftp: error storing file to %s %w", p, err)
 	}
+	fc.releaseConn(err)
 	return nil
 }
 

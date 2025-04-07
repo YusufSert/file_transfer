@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"pgm/services"
+	"pgm/app"
+	"pgm/repo"
 	"pgm/tools/logger"
 	"pgm/tools/loki"
 )
 
 func main() {
-	cfg, err := services.ReadPGMConfig("./config")
+	cfg, err := app.ReadPGMConfig("./config")
 	if err != nil {
 		log.Fatal(fmt.Errorf("pgm: error reading config file %w", err))
 	}
@@ -18,10 +19,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer l.Close() // close the log file when main exits
 	l.SetLevel(cfg.LogLevel)
-	fmt.Println(l.Level)
 
 	ctx := context.Background()
 
@@ -29,14 +28,17 @@ func main() {
 	if err != nil {
 		l.Logger.Error(err.Error())
 	}
-
 	t.Run(ctx)
 	defer t.Close() // closes the log file when man exits
 
-	pgm, err := services.NewPGMService(cfg, l.Logger)
-	if err = pgm.Run(ctx); err != nil {
-		log.Fatal(err)
+	r, err := repo.NewPGMRepo(cfg.DBConnStr)
+	if err != nil {
+		l.Logger.Error(err.Error())
 	}
+
+	pgm, err := app.NewPGMService(cfg, r, l.Logger)
+	fmt.Println(pgm)
+	//todo give pgm to win_service
 }
 
 //todo: check behavior of close(channel) with select statement.

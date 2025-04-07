@@ -25,7 +25,7 @@ func NewPGMRepo(connStr string) (*PGMRepo, error) {
 }
 
 func (r *PGMRepo) WriteDB(ctx context.Context, fileName, fileFolder string) error {
-	q := "BEGIN crm.pgm.FTP_INSERT(:p_gelen_dosya_adi, :p_gelen_dosya_klasor); END;"
+	q := "begin crm.pgm.FTP_INSERT(:p_gelen_dosya_adi, :p_gelen_dosya_klasor); end;"
 	stmt, err := r.db.Prepare(q)
 	if err != nil {
 		return fmt.Errorf("pgm-repo: could not prepare the statement for inserting to db %w", err)
@@ -39,7 +39,7 @@ func (r *PGMRepo) WriteDB(ctx context.Context, fileName, fileFolder string) erro
 }
 
 func (r *PGMRepo) UpdateDB(ctx context.Context, fileName string, status int) error {
-	q := "BEGIN crm.pgm.FTP_EVRAK_STATUSUPDATE(:p_GIDEN_DOSYA, :p_evst_evst_id); END;"
+	q := "begin crm.pgm.FTP_EVRAK_STATUSUPDATE(:p_GIDEN_DOSYA, :p_evst_evst_id); end;"
 	stmt, err := r.db.Prepare(q)
 	if err != nil {
 		return fmt.Errorf("pgm-repo: could not prepare the statement for updating file status %w", err)
